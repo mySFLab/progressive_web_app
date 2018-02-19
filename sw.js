@@ -29,5 +29,19 @@ self.addEventListener('fetch', function (event) {
         // event.respondWith(new Response('<h1>Pas de connexion</h1><div>Mettre en place la gestion hors connexion</div>',headers));
     }
     console.log('fetch event on url : ', event.request.url);
-    
+    // Cache only strategy with network fallBack
+    event.respondWith(caches.match(event.request).then(res => {
+        if (res) {
+            return res;
+        }
+
+        return fetch(event.request).then(newResponse => {
+            caches.open(cacheName).then(cache => {
+                console.debug('ajout '+newResponse.url+' au cache');
+                cache.put(event.request, newResponse);
+            });
+
+            return newResponse.clone();
+        })
+    }))
 });
